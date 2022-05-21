@@ -1,0 +1,57 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Creates a lambda function to check RDS Perf Insights enabled across instances
+Parameters:
+  bktName:
+    Type: String
+    Description: Name of the bucket holding the lambda zip (do NOT precede with s3://)
+    Default: rds-check-perf-insights-bkt
+  zipName:
+    Type: String
+    Description: Name of the lambda zip file
+    Default: rdsPerfInsightsCheck-930e28d3-a84a-4136-a756-288ef4a266f7.zip
+Resources:
+  checkRDSFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Lambda function to check if RDS Perf Insights is enabled across instances
+      Handler: lambda_function.lambda_handler
+      Timeout: 10
+      Role:
+        Fn::GetAtt:
+        - lambdaIAMRole
+        - Arn
+      Code:
+        S3Bucket: !Ref bktName
+        S3Key: !Ref zipName
+      Runtime: python3.8
+      FunctionName:
+        Fn::Sub: rdsPerfInsightsCheck
+  lambdaIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Action:
+          - sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+      Policies:
+      - PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+          - Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Effect: Allow
+            Resource: '*'
+          - Action:
+            - rds:Describe*
+            - rds:ListTagsForResource
+            Effect: Allow
+            Resource: '*'
+        PolicyName:
+          Fn::Sub: lambda-checkRDSPerfInsights
