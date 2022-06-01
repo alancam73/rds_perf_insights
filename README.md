@@ -26,3 +26,20 @@ Timestamp	                    Message
 ### Triggers
 This lambda can be run standalone or via a trigger eg daily via an EventBridge rule eg rate(1 day)
 
+### Alternatives
+You could achieve the same via a query in AWS Config
+* AWS Config -> Advanced Queries -> Query Editor:
+```sql
+SELECT
+  resourceId,
+  resourceName,
+  resourceType,
+  tags,
+  relationships,
+  configuration.dBInstanceClass,
+  configuration.performanceInsightsEnabled,
+  availabilityZone
+WHERE
+  resourceType = 'AWS::RDS::DBInstance'
+  AND configuration.performanceInsightsEnabled = false
+```
